@@ -339,6 +339,17 @@
       border-color: var(--ink);
     }
 
+    .gpt-btn {
+      width: 100%;
+      min-height: 44px;
+      margin-top: 12px;
+      border: 1px solid #9fd3f4;
+      border-radius: 999px;
+      background: #eaf7ff;
+      color: #0369a1;
+      font-weight: 900;
+    }
+
     .auth-screen {
       padding: 24px 16px;
       display: grid;
@@ -592,7 +603,7 @@
 
     <section class="mini-stats" aria-label="ملخص التقدم">
       <div class="mini-card flame-card">
-        <div class="flame-shape"><span id="todayMinutes">0m</span></div>
+        <div class="flame-shape"><span id="todayMinutes">0</span></div>
       </div>
       <div class="mini-card done"><strong id="masteredCount">0</strong><span>أتقنت</span></div>
       <div class="mini-card errors"><strong id="errorCount">0</strong><span>أخطاء</span></div>
@@ -752,7 +763,7 @@
       if (!profile) return;
       const mastered = queue.filter((q) => isMastered(q.id)).length;
       const minutes = Math.floor((todayRecord().seconds || 0) / 60);
-      $("#todayMinutes").textContent = `${minutes}m`;
+      $("#todayMinutes").textContent = latinNumber(minutes);
       $("#masteredCount").textContent = latinNumber(mastered);
       $("#errorCount").textContent = latinNumber(totalErrors());
       $("#remainingCount").textContent = latinNumber(Math.max(queue.length - mastered, 0));
@@ -783,6 +794,30 @@
         <div class="feedback-body">${escapeHtml(q.explanation)}</div>`;
     }
 
+    function chatGptPrompt(q) {
+      const correct = q.options.find((opt) => opt.key === q.correct);
+      const options = q.options.map((opt) => `${opt.key}) ${opt.text}`).join("\n");
+      return `اشرح لي قاعدة هذا السؤال في قواعد اللغة الإنجليزية شرحا تعليميا واضحا بالعربية.
+
+السؤال:
+${q.text}
+
+الخيارات:
+${options}
+
+الإجابة الصحيحة:
+${q.correct}) ${correct?.text || ""}
+
+المطلوب:
+اشرح القاعدة، ولماذا الإجابة الصحيحة صحيحة، ولماذا الخيارات الأخرى خطأ، ثم أعطني أمثلة إضافية وتمرينين قصيرين.`;
+    }
+
+    function openQuestionInChatGPT(q) {
+      const url = `https://chatgpt.com/?q=${encodeURIComponent(chatGptPrompt(q))}`;
+      const opened = window.open(url, "_blank", "noopener,noreferrer");
+      if (!opened) window.location.href = url;
+    }
+
     function renderQuestion() {
       if (!profile) return;
       renderStats();
@@ -811,12 +846,14 @@
         <div class="question-text">${escapeHtml(q.text)}</div>
         <div class="answers">${q.options.map((option) => answerButton(q, option, updatedProgress, answeredCurrent)).join("")}</div>
         <div class="feedback ${answeredCurrent ? "show" : ""}">${feedbackMarkup(q, updatedProgress, answeredCurrent)}</div>
+        <button class="gpt-btn" id="gptBtn" type="button">اسأل ChatGPT عن القاعدة</button>
         <div class="nav-only">
           <button class="nav-btn" id="prevBtn" type="button">السابق</button>
           <button class="nav-btn primary" id="nextBtn" type="button">التالي</button>
         </div>`;
 
       $$(".answer-btn").forEach((button) => button.addEventListener("click", () => chooseAnswer(button.dataset.answer)));
+      $("#gptBtn").addEventListener("click", () => openQuestionInChatGPT(q));
       $("#prevBtn").addEventListener("click", previousQuestion);
       $("#nextBtn").addEventListener("click", nextQuestion);
     }
