@@ -347,7 +347,10 @@
       border-radius: 999px;
       background: #eaf7ff;
       color: #0369a1;
+      display: grid;
+      place-items: center;
       font-weight: 900;
+      text-decoration: none;
     }
 
     .auth-screen {
@@ -812,10 +815,8 @@ ${q.correct}) ${correct?.text || ""}
 اشرح القاعدة، ولماذا الإجابة الصحيحة صحيحة، ولماذا الخيارات الأخرى خطأ، ثم أعطني أمثلة إضافية وتمرينين قصيرين.`;
     }
 
-    function openQuestionInChatGPT(q) {
-      const url = `https://chatgpt.com/?q=${encodeURIComponent(chatGptPrompt(q))}`;
-      const opened = window.open(url, "_blank", "noopener,noreferrer");
-      if (!opened) window.location.href = url;
+    function chatGptUrl(q) {
+      return `https://chatgpt.com/?q=${encodeURIComponent(chatGptPrompt(q))}`;
     }
 
     function renderQuestion() {
@@ -846,14 +847,13 @@ ${q.correct}) ${correct?.text || ""}
         <div class="question-text">${escapeHtml(q.text)}</div>
         <div class="answers">${q.options.map((option) => answerButton(q, option, updatedProgress, answeredCurrent)).join("")}</div>
         <div class="feedback ${answeredCurrent ? "show" : ""}">${feedbackMarkup(q, updatedProgress, answeredCurrent)}</div>
-        <button class="gpt-btn" id="gptBtn" type="button">اسأل ChatGPT عن القاعدة</button>
+        <a class="gpt-btn" id="gptBtn" href="${escapeHtml(chatGptUrl(q))}" target="_blank" rel="noopener noreferrer">اسأل ChatGPT عن القاعدة</a>
         <div class="nav-only">
           <button class="nav-btn" id="prevBtn" type="button">السابق</button>
           <button class="nav-btn primary" id="nextBtn" type="button">التالي</button>
         </div>`;
 
       $$(".answer-btn").forEach((button) => button.addEventListener("click", () => chooseAnswer(button.dataset.answer)));
-      $("#gptBtn").addEventListener("click", () => openQuestionInChatGPT(q));
       $("#prevBtn").addEventListener("click", previousQuestion);
       $("#nextBtn").addEventListener("click", nextQuestion);
     }
